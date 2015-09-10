@@ -169,9 +169,7 @@ function Character(selector)
 	var doJump = function(){
 		self.player.velocity.y += 1;
 		self.player.position.y += self.player.velocity.y
-		console.log(self.player.position.y);
 		if(self.player.position.y >= 60){
-			console.log('here');
 			self.player.position.y = 60;
 			self.player.velocity.y = 0;
 			clearInterval(jumpInterval);
