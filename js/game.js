@@ -11,12 +11,13 @@ function PlayGround(selector)
 
 		var actions_map_for_ch2 = {
 			'STANDING': 	{ keyCode: 0 , 'y': 1, 'x': [0, 1, 2, 3] },		//keyCode for Standing is not needed so this could be changed/refactored
-			'PUNCH':  		{ keyCode: 188, 'y': 2, 'x': [0, 1, 2] },
+			'PUNCH':  		{ keyCode: 80, 'y': 2, 'x': [0, 1, 2] },
 			'WALK_RIGHT': 	{ keyCode: 39, 'y': 3, 'x': [0, 1, 2] },
 			'WALK_LEFT': 	{ keyCode: 37, 'y': 3, 'x': [2, 3, 4] },
 			'KNEEL': 		{ keyCode: 40, 'y': 9, 'x': [0] },
-			'ROUND_HOUSE': 	{ keyCode: 190, 'y': 7, 'x': [0, 1, 2, 3, 4] },
-			'KICK': 		{ keyCode: 191, 'y': 6, 'x': [0, 1, 2, 3, 4] }
+			'ROUND_HOUSE': 	{ keyCode: 219, 'y': 7, 'x': [0, 1, 2, 3, 4] },
+			'KICK': 		{ keyCode: 221, 'y': 6, 'x': [0, 1, 2, 3, 4] },
+			'JUMP': 		{ keyCode: 38, 'y': 8, 'x': [0, 1, 2, 3, 4, 5, 6] }
 		}	//this records the appropriate keyCode as well as the coordinate of the sprites in ken.png that correspond to that particular action
 
 		ch2.setControl(actions_map_for_ch2, 2);
@@ -74,20 +75,25 @@ function Character(selector)
 {
 	var context = selector;
 	var this_obj = this;
-
+	var jumping = false;
+	var jumpInterval;
+	var self = this;
+	
 	var actions_map = {
 			'STANDING': 	{ keyCode: 0 , 'y': 1, 'x': [0, 1, 2, 3] },		//keyCode for Standing is not needed so this could be changed/refactored
-			'PUNCH':  		{ keyCode: 81, 'y': 2, 'x': [0, 1, 2] },
+			'PUNCH':  		{ keyCode: 70, 'y': 2, 'x': [0, 1, 2] },
 			'WALK_RIGHT': 	{ keyCode: 68, 'y': 3, 'x': [0, 1, 2] },
 			'WALK_LEFT': 	{ keyCode: 65, 'y': 3, 'x': [2, 3, 4] },
 			'KNEEL': 		{ keyCode: 83, 'y': 9, 'x': [0] },
-			'ROUND_HOUSE': 	{ keyCode: 69, 'y': 7, 'x': [0, 1, 2, 3, 4] },
-			'KICK': 		{ keyCode: 87, 'y': 6, 'x': [0, 1, 2, 3, 4] }
+			'ROUND_HOUSE': 	{ keyCode: 71, 'y': 7, 'x': [0, 1, 2, 3, 4] },
+			'KICK': 		{ keyCode: 72, 'y': 6, 'x': [0, 1, 2, 3, 4] },
+			'JUMP': 		{ keyCode: 87, 'y': 8, 'x': [0, 1, 2, 3, 4, 5, 6] }
 		}	//this records the appropriate keyCode as well as the coordinate of the sprites in ken.png that correspond to that particular action
-
+	
 	this.player = {
 		action: 		"STANDING", 
-		position: 		{ x:0, y:0 } ,
+		position: 		{ x:0, y:60 } ,
+		velocity:       { x:0, y:0 } , 
 		player_number: 	1 ,
 		img_source: 	'images/ken.png' ,
 		health: 		100 ,
@@ -145,15 +151,31 @@ function Character(selector)
 	{
 		if(this.player.counter>=actions_map[this.player.action].x.length)
 		{
+			if(this.player.action == 'JUMP' && jumping) jumping = false;
 			this.player.counter=0;
 			//if action is anything other than 'STANDING' change the action back to 'STANDING'
 			this.player.action = 'STANDING';
 		}
-		
 		if(this.player.action == 'WALK_LEFT')
 			this.player.position.x = this.player.position.x-4;
 		else if(this.player.action == 'WALK_RIGHT')
 			this.player.position.x = this.player.position.x+4;
+		if(this.player.action == 'JUMP' && !jumping){
+			jumping = true;
+			this.player.velocity.y = -10;
+			jumpInterval = setInterval(doJump, 33);
+		}
+	}
+	var doJump = function(){
+		self.player.velocity.y += 1;
+		self.player.position.y += self.player.velocity.y
+		console.log(self.player.position.y);
+		if(self.player.position.y >= 60){
+			console.log('here');
+			self.player.position.y = 60;
+			self.player.velocity.y = 0;
+			clearInterval(jumpInterval);
+		}
 	}
 
 	//draws the character on the screen
@@ -163,12 +185,12 @@ function Character(selector)
 		this.updateCoordinate();
 		
 		if(this.player.player_number == 1)
-			context.drawImage(img, actions_map[this.player.action].x[this.player.counter++]*70, actions_map[this.player.action].y*80, 70, 80, this.player.position.x, 53, 70, 80); //see http://www.w3schools.com/tags/canvas_drawimage.asp to better understand how drawImage method works
+			context.drawImage(img, actions_map[this.player.action].x[this.player.counter++]*70, actions_map[this.player.action].y*80, 70, 80, this.player.position.x, this.player.position.y, 70, 80); //see http://www.w3schools.com/tags/canvas_drawimage.asp to better understand how drawImage method works
 		else	//if it's player 2 rotate the image so that it's facing the other way
 		{
 			context.save();
 			context.scale(-1, 1);
-			context.drawImage(img, actions_map[this.player.action].x[this.player.counter++]*70, actions_map[this.player.action].y*80, 70, 80, this.player.position.x*-1-70, 53, 70, 80); //see http://www.w3schools.com/tags/canvas_drawimage.asp to better understand how drawImage method works
+			context.drawImage(img, actions_map[this.player.action].x[this.player.counter++]*70, actions_map[this.player.action].y*80, 70, 80, this.player.position.x*-1-70, this.player.position.y, 70, 80); //see http://www.w3schools.com/tags/canvas_drawimage.asp to better understand how drawImage method works
 			context.restore();
 		}
 
